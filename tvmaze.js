@@ -4,6 +4,7 @@ const $showsList = $("#showsList");
 const $episodesArea = $("#episodesArea");
 const $searchForm = $("#searchForm");
 const $form = $("#searchForm-term");
+const $episodesList = $("#episodesList");
 
 /** Given a search term, search for tv shows that match that query.
  *
@@ -19,28 +20,34 @@ async function getShowsByTerm(searchTerm) {
             q: searchTerm,
         }
     });
+  
+  let showArray = [];
+  for(let i = 0; i < res.data.length; i++){
+    console.log(res.data[i]);
+    let id = res.data[i].show.id;
+    let showName = res.data[i].show.name;
+    let summary = res.data[i].show.summary;
+    let img;
     
+     try{img = res.data[i].show.image.medium}
+     catch(e){
+      img = "https://store-images.s-microsoft.com/image/apps.65316.13510798887490672.6e1ebb25-96c8-4504-b714-1f7cbca3c5ad.f9514a23-1eb8-4916-a18e-99b1a9817d15?mode=scale&q=90&h=300&w=300";
+     }
 
-  let id = res.data[0].show.id;
-  let showName = res.data[0].show.name;
-  let summary = res.data[0].show.summary;
-  let img;
-
-  if(!res.data[0].show.image.original){
-    img = "https://store-images.s-microsoft.com/image/apps.65316.13510798887490672.6e1ebb25-96c8-4504-b714-1f7cbca3c5ad.f9514a23-1eb8-4916-a18e-99b1a9817d15?mode=scale&q=90&h=300&w=300"
-  } else {
-    img = res.data[0].show.image.original;
+    let obj = 
+      {
+        id: id,
+        name: showName,
+        summary:
+          summary,
+        image: img
+      }
+    ;
+    showArray.push(obj)
   }
-
-  return [
-    {
-      id: id,
-      name: showName,
-      summary:
-        summary,
-      image: img
-    }
-  ];
+  
+  console.log(showArray)
+  return showArray;
 }
 /** Given list of shows, create markup for each and to DOM */
 
@@ -109,12 +116,12 @@ async function getEpisodesOfShow(id) {
   }
 
   function populateEpisodes(episodes){
-    $episodesArea.empty();
+    $episodesList.empty();
 
     for (let episode of episodes){
-      let item = (`<li> ${episode.name} (season: ${episode.season} episode: ${episode.number}) </li>`)
+      const $item = $(`<li> ${episode.name} (season: ${episode.season} episode: ${episode.number}) </li>`);
 
-      $episodesArea.append(item);
+      $episodesList.append($item);
     }
     $episodesArea.show();
     
@@ -123,9 +130,10 @@ async function getEpisodesOfShow(id) {
   async function getEpisodesAndDisplay(evt) {
 
     const showId = $(evt.target).closest(".Show").data("show-id");
-  
+    
     const episodes = await getEpisodesOfShow(showId);
     populateEpisodes(episodes);
+    $showsList.empty();
   }
   
   $showsList.on("click", ".Show-getEpisodes", getEpisodesAndDisplay);
